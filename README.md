@@ -1,6 +1,6 @@
 # logman
 
-:smile: logman
+:smile: golang library to organize log files (create by date, GC, etc)
 
 [![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/moul.io/logman)
 [![License](https://img.shields.io/badge/license-Apache--2.0%20%2F%20MIT-%2397ca00.svg)](https://github.com/moul/logman/blob/main/COPYRIGHT)
@@ -18,18 +18,44 @@
 
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/moul/logman)
 
+## Example
+
+[embedmd]:# (example_test.go /import\ / $)
+```go
+import "moul.io/logman"
+
+func Example() {
+	writer, _ := logman.NewWriteCloser("./path/to/logdir/", "my-app")
+	defer writer.Close()
+	writer.Write([]byte("hello world!"))
+}
+```
+
 ## Usage
 
-[embedmd]:# (.tmp/usage.txt console)
-```console
-foo@bar:~$ logman hello world
-            _                                                   _                      _        _
- __ _  ___ | | __ _  _ _   __ _  ___  _ _  ___  _ __  ___  ___ | |_  ___  _ __   _ __ | | __ _ | |_  ___
-/ _` |/ _ \| |/ _` || ' \ / _` ||___|| '_|/ -_)| '_ \/ _ \|___||  _|/ -_)| '  \ | '_ \| |/ _` ||  _|/ -_)
-\__, |\___/|_|\__,_||_||_|\__, |     |_|  \___|| .__/\___/      \__|\___||_|_|_|| .__/|_|\__,_| \__|\___|
-|___/                     |___/                |_|                              |_|
-12 CPUs, /home/moul/.gvm/pkgsets/go1.16/global/bin/logman, fwrz, go1.16
-args ["logman","hello","world"]
+[embedmd]:# (.tmp/godoc.txt txt /FUNCTIONS/ $)
+```txt
+FUNCTIONS
+
+func LogfileGC(logDir string, max int) error
+func NewWriteCloser(target, kind string) (io.WriteCloser, error)
+
+TYPES
+
+type Logfile struct {
+	Dir    string
+	Name   string
+	Size   int64
+	Kind   string
+	Time   time.Time
+	Latest bool
+	Errs   error `json:"Errs,omitempty"`
+}
+
+func LogfileList(logDir string) ([]*Logfile, error)
+
+func (l Logfile) Path() string
+
 ```
 
 ## Install
