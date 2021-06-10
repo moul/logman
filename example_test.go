@@ -13,15 +13,13 @@ func Example() {
 		MaxFiles: 10,
 	}
 
-	/*
-		// cleanup old log files for a specific app name
-		err := manager.GCWithName("my-app")
-		checkErr(err)
+	// cleanup old log files for a specific app name
+	err := manager.Flush("my-app")
+	checkErr(err)
 
-		// cleanup old log files for any app sharing this log directory
-		err = manager.GC()
-		checkErr(err)
-	*/
+	// cleanup old log files for any app sharing this log directory
+	err = manager.FlushAll()
+	checkErr(err)
 
 	// list existing log files
 	files, err := manager.Files()

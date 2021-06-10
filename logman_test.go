@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 	"time"
 
@@ -134,6 +135,7 @@ func TestLogfile(t *testing.T) {
 	// create 10 new files
 	{
 		for i := 0; i < 10; i++ {
+			time.Sleep(10 * time.Millisecond)
 			writer, err := manager.New(fmt.Sprintf("hello-%d", i))
 			require.NoError(t, err)
 			err = writer.Close()
@@ -167,33 +169,51 @@ func TestLogfile(t *testing.T) {
 		files, err := manager.Files()
 		require.NoError(t, err)
 		require.Len(t, files, 10)
+
+		names := []string{}
+		for _, file := range files {
+			names = append(names, file.Name)
+		}
+		sort.Strings(names)
+		require.Equal(t, names, []string{"hello-0", "hello-1", "hello-2", "hello-3", "hello-4", "hello-5", "hello-6", "hello-7", "hello-8", "hello-9"})
 	}
 
-	/*
-		// try to gc with the current amount of files
-		{
-			err := logman.LogfileGC(tempdir, 10)
-			require.NoError(t, err)
-		}
+	// flush byname
+	{
+		err := manager.Flush("hello-3")
+		require.NoError(t, err)
 
-		// check loading files from the directory, should still have ten
-		{
-			files, err := manager.Files()
-			require.NoError(t, err)
-			require.Len(t, files, 10)
-		}
+		err = manager.Flush("hello-3")
+		require.NoError(t, err)
 
-		// try to gc with only one
-		{
-			err := logman.LogfileGC(tempdir, 1)
-			require.NoError(t, err)
-		}
+		err = manager.Flush("hello-7")
+		require.NoError(t, err)
+	}
 
-		// check loading files from the directory, should now have only one
-		{
-			files, err := manager.Files()
-			require.NoError(t, err)
-			require.Len(t, files, 1)
+	// check loading files from the directory, should have eight now
+	{
+		files, err := manager.Files()
+		require.NoError(t, err)
+		require.Len(t, files, 8)
+
+		names := []string{}
+		for _, file := range files {
+			names = append(names, file.Name)
 		}
-	*/
+		sort.Strings(names)
+		require.Equal(t, names, []string{"hello-0", "hello-1", "hello-2", "hello-4", "hello-5", "hello-6", "hello-8", "hello-9"})
+	}
+
+	// flush all
+	{
+		err := manager.FlushAll()
+		require.NoError(t, err)
+	}
+
+	// check loading files from the directory, should have eight now
+	{
+		files, err := manager.Files()
+		require.NoError(t, err)
+		require.Len(t, files, 0)
+	}
 }

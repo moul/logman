@@ -187,18 +187,56 @@ func (m Manager) gc() error {
 	return errs
 }
 
-/*
-   // GCWithName cleans up old log files matching a specific name.
-   func (m Manager) GCWithName(name string) error {
-	return nil
+// Flush deletes old log files for the specified app name.
+func (m Manager) Flush(name string) error {
+	// FIXME: check if we can make something for active log files here
+	dir := m.dir()
+
+	if !u.DirExists(dir) {
+		return nil
 	}
 
-   // GC cleans up old log files.
-   func (m Manager) GC() error {
-	return nil
+	files, err := m.Files()
+	if err != nil {
+		return err
 	}
-*/
 
+	var errs error
+	for _, file := range files {
+		if file.Name == name {
+			if err := os.Remove(file.Path); err != nil {
+				errs = multierr.Append(errs, err)
+			}
+		}
+	}
+
+	return errs
+}
+
+// FlushAll deletes old log files for any app name.
+func (m Manager) FlushAll() error {
+	dir := m.dir()
+
+	if !u.DirExists(dir) {
+		return nil
+	}
+
+	files, err := m.Files()
+	if err != nil {
+		return err
+	}
+
+	var errs error
+	for _, file := range files {
+		if err := os.Remove(file.Path); err != nil {
+			errs = multierr.Append(errs, err)
+		}
+	}
+
+	return errs
+}
+
+// String implements Stringer.
 func (f File) String() string {
 	return f.Path
 }
