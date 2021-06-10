@@ -22,39 +22,103 @@
 
 [embedmd]:# (example_test.go /import\ / $)
 ```go
-import "moul.io/logman"
+import (
+	"fmt"
+
+	"moul.io/logman"
+)
 
 func Example() {
-	writer, _ := logman.NewWriteCloser("./path/to/logdir/", "my-app")
+	// new log manager
+	manager := logman.Manager{
+		Path:     "./path/to/dir",
+		MaxFiles: 10,
+	}
+
+	/*
+		// cleanup old log files for a specific app name
+		err := manager.GCWithName("my-app")
+		checkErr(err)
+
+		// cleanup old log files for any app sharing this log directory
+		err = manager.GC()
+		checkErr(err)
+	*/
+
+	// list existing log files
+	files, err := manager.Files()
+	checkErr(err)
+	fmt.Println(files)
+
+	// - create an WriteCloser
+	// - automatically delete old log files if it hits a limit
+	writer, err := manager.New("my-app")
+	checkErr(err)
 	defer writer.Close()
-	writer.Write([]byte("hello world!"))
+	writer.Write([]byte("hello world!\n"))
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 ```
 
 ## Usage
 
-[embedmd]:# (.tmp/godoc.txt txt /FUNCTIONS/ $)
+[embedmd]:# (.tmp/godoc.txt txt /TYPES/ $)
 ```txt
-FUNCTIONS
-
-func LogfileGC(logDir string, max int) error
-func NewWriteCloser(target, kind string) (io.WriteCloser, error)
-
 TYPES
 
-type Logfile struct {
-	Dir    string
-	Name   string
-	Size   int64
-	Kind   string
-	Time   time.Time
+type File struct {
+	// Full path.
+	Path string
+
+	// Size in bytes.
+	Size int64
+
+	// Provided name when creating the file.
+	Name string
+
+	// Creation date of the file.
+	Time time.Time
+
+	// Whether it is the most recent log file for the provided app name or not.
 	Latest bool
-	Errs   error `json:"Errs,omitempty"`
+
+	// If there were errors when trying to get info about this file.
+	Errs error `json:"Errs,omitempty"`
 }
+    File defines a log file with metadata.
 
-func LogfileList(logDir string) ([]*Logfile, error)
+func (f File) String() string
 
-func (l Logfile) Path() string
+type Manager struct {
+	// Path is the target directory containing the log files.
+	// Default is '.'.
+	Path string
+
+	// MaxFiles is the maximum number of log files in the directory.
+	// If 0, won't automatically GC based on this criteria.
+	MaxFiles int
+}
+    Manager is a configuration object used to create log files with automatic GC
+    rules.
+
+func (m Manager) Files() ([]File, error)
+    Files returns a list of existing log files.
+
+func (m Manager) New(name string) (io.WriteCloser, error)
+    Create a new log file and perform automatic GC of the old log files if
+    needed.
+
+    The created log file will looks like:
+
+        <path/to/log/dir>/<name>-<time>.log
+
+    Depending on the provided configuration of Manager, an automatic GC will be
+    run automatically.
 
 ```
 
