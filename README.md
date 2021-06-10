@@ -35,15 +35,13 @@ func Example() {
 		MaxFiles: 10,
 	}
 
-	/*
-		// cleanup old log files for a specific app name
-		err := manager.GCWithName("my-app")
-		checkErr(err)
+	// cleanup old log files for a specific app name
+	err := manager.Flush("my-app")
+	checkErr(err)
 
-		// cleanup old log files for any app sharing this log directory
-		err = manager.GC()
-		checkErr(err)
-	*/
+	// cleanup old log files for any app sharing this log directory
+	err = manager.FlushAll()
+	checkErr(err)
 
 	// list existing log files
 	files, err := manager.Files()
@@ -93,6 +91,7 @@ type File struct {
     File defines a log file with metadata.
 
 func (f File) String() string
+    String implements Stringer.
 
 type Manager struct {
 	// Path is the target directory containing the log files.
@@ -108,6 +107,12 @@ type Manager struct {
 
 func (m Manager) Files() ([]File, error)
     Files returns a list of existing log files.
+
+func (m Manager) Flush(name string) error
+    Flush deletes old log files for the specified app name.
+
+func (m Manager) FlushAll() error
+    FlushAll deletes old log files for any app name.
 
 func (m Manager) New(name string) (io.WriteCloser, error)
     Create a new log file and perform automatic GC of the old log files if
