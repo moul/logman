@@ -73,7 +73,7 @@ func (m Manager) New(name string) (io.WriteCloser, error) {
 
 	// create log dif if missing
 	if dir := filepath.Dir(filename); !u.DirExists(dir) {
-		err := os.MkdirAll(dir, 0o711)
+		err := os.MkdirAll(dir, 0o711) // nolint:gomnd
 		if err != nil {
 			return nil, fmt.Errorf("create log dir: %w", err)
 		}
